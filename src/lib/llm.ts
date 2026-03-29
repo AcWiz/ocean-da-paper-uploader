@@ -75,26 +75,19 @@ export async function extractPaperInfo(text: string): Promise<ExtractedPaperData
   })
 
   // Handle different response formats from various API providers
-  let responseText: string
+  // Skip 'thinking' blocks (Claude extended thinking) and find the text block
+  let responseText: string | undefined
   if (typeof response.content === 'string') {
-    // Some providers return content as a direct string
     responseText = response.content
   } else if (Array.isArray(response.content)) {
-    const content = response.content[0]
-    if (!content) {
-      throw new Error('LLM返回内容为空')
-    }
-    // Handle Anthropic format: { type: 'text', text: '...' }
-    // Handle generic format: { text: '...' }
-    if ('text' in content) {
-      responseText = (content as { text: string }).text
-    } else {
-      console.error('LLM response content:', JSON.stringify(response.content, null, 2))
-      throw new Error(`LLM返回格式错误: 未预期的content类型 ${content.type}`)
-    }
-  } else {
-    console.error('LLM response:', JSON.stringify(response, null, 2))
-    throw new Error('LLM返回格式错误: content既不是string也不是array')
+    // Find the first block that has a 'text' property
+    const textBlock = response.content.find((block: any) => 'text' in block) as { text?: string } | undefined
+    responseText = textBlock?.text
+  }
+
+  if (!responseText) {
+    console.error('LLM response content:', JSON.stringify(response.content, null, 2))
+    throw new Error('LLM返回格式错误: 未找到text内容')
   }
 
   let data: ExtractedPaperData
