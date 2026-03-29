@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractTextFromPDF } from '@/lib/pdf'
 import { extractPaperInfo } from '@/lib/llm'
+import {
+  MAX_PDF_SIZE_BYTES,
+  MIN_EXTRACTED_TEXT_LENGTH,
+  ERROR_MESSAGES
+} from '@/lib/constants'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,24 +14,31 @@ export async function POST(request: NextRequest) {
 
     if (!pdfFile) {
       return NextResponse.json(
-        { success: false, error: '未提供PDF文件' },
+        { success: false, error: ERROR_MESSAGES.PDF_REQUIRED },
         { status: 400 }
       )
     }
 
     if (pdfFile.type !== 'application/pdf') {
       return NextResponse.json(
-        { success: false, error: '文件必须是PDF格式' },
+        { success: false, error: ERROR_MESSAGES.PDF_INVALID_TYPE },
         { status: 400 }
+      )
+    }
+
+    if (pdfFile.size > MAX_PDF_SIZE_BYTES) {
+      return NextResponse.json(
+        { success: false, error: ERROR_MESSAGES.PDF_TOO_LARGE },
+        { status: 413 }
       )
     }
 
     // Extract text from PDF
     const text = await extractTextFromPDF(pdfFile)
 
-    if (!text || text.length < 100) {
+    if (!text || text.length < MIN_EXTRACTED_TEXT_LENGTH) {
       return NextResponse.json(
-        { success: false, error: '无法从PDF中提取文本（可能是扫描版）' },
+        { success: false, error: ERROR_MESSAGES.PDF_TEXT_EXTRACTION_FAILED },
         { status: 400 }
       )
     }
@@ -38,10 +50,11 @@ export async function POST(request: NextRequest) {
       success: true,
       paper
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Extract error:', error)
+    const message = error instanceof Error ? error.message : ERROR_MESSAGES.PARSE_FAILED
     return NextResponse.json(
-      { success: false, error: error.message || '解析失败' },
+      { success: false, error: message },
       { status: 500 }
     )
   }
