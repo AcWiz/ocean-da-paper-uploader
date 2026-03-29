@@ -4,11 +4,9 @@ import { parseArxivYear } from './utils'
 
 // Singleton client - initialized once per server lifecycle
 let _anthropic: Anthropic | null = null
-let _initPromise: Promise<Anthropic> | null = null
 
 function getAnthropicClient(): Anthropic {
   if (_anthropic) return _anthropic
-  if (_initPromise) return _initPromise as unknown as Anthropic
 
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error('ANTHROPIC_API_KEY environment variable is not set')
@@ -86,14 +84,13 @@ export async function extractPaperInfo(text: string): Promise<ExtractedPaperData
     if (!content) {
       throw new Error('LLM返回内容为空')
     }
-    if (content.type === 'text') {
-      responseText = content.text
-    } else if ('text' in content) {
-      // Some providers return { text: "..." } directly
-      responseText = content.text as string
+    // Handle Anthropic format: { type: 'text', text: '...' }
+    // Handle generic format: { text: '...' }
+    if ('text' in content) {
+      responseText = (content as { text: string }).text
     } else {
       console.error('LLM response content:', JSON.stringify(response.content, null, 2))
-      throw new Error(`LLM返回格式错误: 未预期的content类型`)
+      throw new Error(`LLM返回格式错误: 未预期的content类型 ${content.type}`)
     }
   } else {
     console.error('LLM response:', JSON.stringify(response, null, 2))
