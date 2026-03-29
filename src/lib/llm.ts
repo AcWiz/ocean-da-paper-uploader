@@ -1,10 +1,29 @@
-import OpenAI from 'openai'
-import { METHOD_TAGS_PROMPT, APPLICATION_TAGS_PROMPT } from './constants'
+import Anthropic from '@anthropic-ai/sdk'
+import { METHOD_TAGS_PROMPT, APPLICATION_TAGS_PROMPT, CLAUDE_MODEL } from './constants'
 import { parseArxivYear } from './utils'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Singleton client - initialized once per server lifecycle
+let _anthropic: Anthropic | null = null
+let _initPromise: Promise<Anthropic> | null = null
+
+function getAnthropicClient(): Anthropic {
+  if (_anthropic) return _anthropic
+  if (_initPromise) return _initPromise as unknown as Anthropic
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY environment variable is not set')
+  }
+
+  const config: { apiKey: string; baseURL?: string } = {
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  }
+  if (process.env.ANTHROPIC_BASE_URL) {
+    config.baseURL = process.env.ANTHROPIC_BASE_URL
+  }
+
+  _anthropic = new Anthropic(config)
+  return _anthropic
+}
 
 export interface ExtractedPaperData {
   title: string
@@ -42,22 +61,52 @@ const SYSTEM_PROMPT = `你是一个学术论文信息提取助手。给定一篇
 5. 如果没有arXiv ID，arxiv字段为空字符串`
 
 export async function extractPaperInfo(text: string): Promise<ExtractedPaperData> {
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
+  const anthropic = getAnthropicClient()
+  const truncatedText = text.slice(0, 15000)
+
+  const response = await anthropic.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 1024,
+    system: SYSTEM_PROMPT,
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
-      { role: 'user', content: text.slice(0, 15000) }
+      {
+        role: 'user',
+        content: truncatedText
+      }
     ],
-    response_format: { type: 'json_object' },
-    temperature: 0.3,
   })
 
-  const content = completion.choices[0]?.message?.content
-  if (!content) {
-    throw new Error('LLM返回为空')
+  // Handle different response formats from various API providers
+  let responseText: string
+  if (typeof response.content === 'string') {
+    // Some providers return content as a direct string
+    responseText = response.content
+  } else if (Array.isArray(response.content)) {
+    const content = response.content[0]
+    if (!content) {
+      throw new Error('LLM返回内容为空')
+    }
+    if (content.type === 'text') {
+      responseText = content.text
+    } else if ('text' in content) {
+      // Some providers return { text: "..." } directly
+      responseText = content.text as string
+    } else {
+      console.error('LLM response content:', JSON.stringify(response.content, null, 2))
+      throw new Error(`LLM返回格式错误: 未预期的content类型`)
+    }
+  } else {
+    console.error('LLM response:', JSON.stringify(response, null, 2))
+    throw new Error('LLM返回格式错误: content既不是string也不是array')
   }
 
-  const data = JSON.parse(content)
+  let data: ExtractedPaperData
+  try {
+    data = JSON.parse(responseText)
+  } catch (e) {
+    console.error('JSON parse error. LLM response text:', responseText.slice(0, 500))
+    throw new Error(`LLM返回的JSON格式错误: ${responseText.slice(0, 200)}`)
+  }
 
   // Infer year from arXiv ID if not provided
   if (!data.year && data.arxiv) {
@@ -71,6 +120,6 @@ export async function extractPaperInfo(text: string): Promise<ExtractedPaperData
 
   return {
     ...data,
-    rawText: text.slice(0, 15000) // Store only what was sent to LLM
+    rawText: truncatedText
   }
 }
