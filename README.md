@@ -1,11 +1,11 @@
 # Ocean DA Paper Uploader
 
-PDF论文上传工具，用于向 [ai-data-assimilation-papers](https://github.com/yourusername/ai-data-assimilation-papers) 论文库提交新论文。
+PDF论文上传工具，用于向 [awesome-ocean-da](https://github.com/AcWiz/awesome-ocean-da) 论文库提交新论文。
 
 ## 功能
 
 - 拖拽或选择本地PDF文件上传
-- 使用 GPT-4o 自动提取论文信息（标题、作者、年份、arXiv ID、摘要等）
+- 使用 Claude Sonnet 自动提取论文信息（标题、作者、年份、arXiv ID、摘要等）
 - 可视化确认和编辑提取结果
 - 自动创建 GitHub Pull Request
 
@@ -22,10 +22,11 @@ PDF论文上传工具，用于向 [ai-data-assimilation-papers](https://github.c
 1. Fork 本仓库
 2. 在 Vercel 中导入项目
 3. 配置环境变量：
-   - `OPENAI_API_KEY`
-   - `GITHUB_TOKEN`
-   - `GITHUB_REPO_OWNER`
-   - `GITHUB_REPO_NAME`
+   - `ANTHROPIC_API_KEY` - Anthropic API 密钥
+   - `ANTHROPIC_BASE_URL` - API endpoint (如使用 minimax 则为 `https://api.minimaxi.com/anthropic`)
+   - `GITHUB_TOKEN` - GitHub Personal Access Token (需要 repo 权限)
+   - `GITHUB_REPO_OWNER` = `AcWiz`
+   - `GITHUB_REPO_NAME` = `awesome-ocean-da`
 4. 部署
 
 ### GitHub Pages
@@ -50,5 +51,5 @@ npm run dev
 - TypeScript
 - TailwindCSS
 - pdf.js (PDF文本提取)
-- OpenAI GPT-4o (信息提取)
+- Claude Sonnet (信息提取)
 - Octokit (GitHub API)

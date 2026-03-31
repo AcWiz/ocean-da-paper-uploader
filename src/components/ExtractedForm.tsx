@@ -186,6 +186,101 @@ export default function ExtractedForm({ paper, onConfirm, onBack }: ExtractedFor
             {form.abstract || form.rawText.slice(0, 500) + '...'}
           </p>
         </div>
+
+        {/* Chinese Structured Content */}
+        <div className="border-t border-slate-200 pt-6">
+          <h3 className="text-lg font-semibold text-slate-800 mb-4">中文内容（AI提取）</h3>
+
+          {/* Research Problem */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-1">研究问题</label>
+            {isEditing ? (
+              <textarea
+                value={form.researchProblem}
+                onChange={(e) => setForm({ ...form, researchProblem: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="本文要解决什么问题？研究动机是什么？"
+              />
+            ) : (
+              <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg">
+                {form.researchProblem || '待提取'}
+              </p>
+            )}
+          </div>
+
+          {/* Core Contributions */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-1">核心贡献</label>
+            {isEditing ? (
+              <textarea
+                value={form.coreContributions}
+                onChange={(e) => setForm({ ...form, coreContributions: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="3-5 个关键贡献点"
+              />
+            ) : (
+              <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg whitespace-pre-wrap">
+                {form.coreContributions || '待提取'}
+              </p>
+            )}
+          </div>
+
+          {/* Method Details */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-1">方法详解</label>
+            {isEditing ? (
+              <textarea
+                value={form.methodDetails}
+                onChange={(e) => setForm({ ...form, methodDetails: e.target.value })}
+                rows={4}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="核心方法的详细描述"
+              />
+            ) : (
+              <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg whitespace-pre-wrap">
+                {form.methodDetails || '待提取'}
+              </p>
+            )}
+          </div>
+
+          {/* Experiments */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-1">实验分析</label>
+            {isEditing ? (
+              <textarea
+                value={form.experiments}
+                onChange={(e) => setForm({ ...form, experiments: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="实验设置、结果和发现"
+              />
+            ) : (
+              <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg whitespace-pre-wrap">
+                {form.experiments || '待提取'}
+              </p>
+            )}
+          </div>
+
+          {/* Pros & Cons */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-slate-700 mb-1">优缺点</label>
+            {isEditing ? (
+              <textarea
+                value={form.prosCons}
+                onChange={(e) => setForm({ ...form, prosCons: e.target.value })}
+                rows={4}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="优点：&#10;- 点1&#10;&#10;缺点：&#10;- 点1"
+              />
+            ) : (
+              <p className="text-sm text-slate-600 bg-blue-50 p-3 rounded-lg whitespace-pre-wrap">
+                {form.prosCons || '待提取'}
+              </p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Actions */}

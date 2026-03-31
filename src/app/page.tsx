@@ -16,6 +16,12 @@ export interface ExtractedPaper {
   abstract: string
   tldr: string
   rawText: string
+  // Structured Chinese content
+  researchProblem: string
+  coreContributions: string
+  methodDetails: string
+  experiments: string
+  prosCons: string
 }
 
 type Step = 'upload' | 'confirm' | 'pr'
@@ -67,7 +73,7 @@ export default function Home() {
       <div className="flex items-center justify-center space-x-4 text-sm">
         <div className={`flex items-center ${step === 'upload' ? 'text-blue-600 font-bold' : 'text-slate-400'}`}>
           <span className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
-            step === 'upload' ? 'bg-blue-600 text-white' : step !== 'upload' ? 'bg-green-500 text-white' : 'bg-slate-300'
+            step === 'upload' ? 'bg-blue-600 text-white' : 'bg-green-500 text-white'
           }`}>
             {step !== 'upload' ? '✓' : '1'}
           </span>

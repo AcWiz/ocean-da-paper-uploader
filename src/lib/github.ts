@@ -2,8 +2,8 @@ import { Octokit } from '@octokit/rest'
 import { DEFAULT_DIFFICULTY, DEFAULT_IMPORTANCE } from './constants'
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN
-const REPO_OWNER = process.env.GITHUB_REPO_OWNER || 'yourusername'
-const REPO_NAME = process.env.GITHUB_REPO_NAME || 'ai-data-assimilation-papers'
+const REPO_OWNER = process.env.GITHUB_REPO_OWNER ?? 'AcWiz'
+const REPO_NAME = process.env.GITHUB_REPO_NAME ?? 'awesome-ocean-da'
 
 export interface CreatePRParams {
   title: string
@@ -16,9 +16,40 @@ export interface CreatePRParams {
   tldr: string
   abstract: string
   paperDir: string
+  // Structured Chinese content
+  researchProblem: string
+  coreContributions: string
+  methodDetails: string
+  mathModeling: string
+  experiments: string
+  prosCons: string
+  engineering落地: string
+  idea扩展: string
 }
 
 function generateAbstractMd(params: CreatePRParams): string {
+  // Parse prosCons into structured format
+  const prosConsLines = params.prosCons.split('\n')
+  let pros = ''
+  let cons = ''
+  let inPros = false
+  let inCons = false
+
+  for (const line of prosConsLines) {
+    if (line.includes('优点')) { inPros = true; inCons = false; continue }
+    if (line.includes('缺点')) { inCons = true; inPros = false; continue }
+    if (inPros && line.trim()) pros += line + '\n'
+    if (inCons && line.trim()) cons += line + '\n'
+  }
+
+  // Parse coreContributions into numbered list
+  const contributionLines = (params.coreContributions || '1. 3-5 个关键贡献点').split('\n').filter(l => l.trim())
+  const numberedContributions = contributionLines.map((line, i) => {
+    const num = i + 1
+    const content = line.replace(/^\d+\.\s*/, '').trim()
+    return `${num}. ${content}`
+  }).join('\n')
+
   return `---
 title: "${params.title}"
 arXiv: "${params.arxiv}"
@@ -47,27 +78,50 @@ read_status: "skim"
 
 ## 研究问题
 
-> 本文要解决什么问题？研究动机是什么？
+> ${params.researchProblem || '本文要解决什么问题？研究动机是什么？'}
 
 ## 核心贡献
 
-> 3-5 个关键贡献点
+${numberedContributions || '1. 3-5 个关键贡献点'}
 
 ## 方法详解
 
-> 核心方法的详细描述
+> ${params.methodDetails || '核心方法的详细描述'}
+
+## 数学/物理建模
+
+> ${params.mathModeling || '关键公式和物理意义'}
 
 ## 实验分析
 
-> 实验设置、结果和发现
+> ${params.experiments || '实验设置、结果和发现'}
 
 ## 优缺点
 
 **优点：**
--
+${pros || '- '}
 
 **缺点：**
--
+${cons || '- '}
+
+## 工程落地
+
+> ${params.engineering落地 || '实际应用场景和可行性'}
+
+## Idea 扩展
+
+> ${params.idea扩展 || '可以借鉴到其他研究的想法'}
+
+## BibTeX
+
+\`\`\`bibtex
+@article{${params.title.replace(/\s+/g, '')}${params.year},
+  title={${params.title}},
+  author={${params.authors.join(' and ')}},
+  journal={arXiv preprint arXiv:${params.arxiv}},
+  year={${params.year}}
+}
+\`\`\`
 `
 }
 
